@@ -1,6 +1,7 @@
 #!/bin/bash
 if [ "$#" -lt 2 ]; then
 		echo	
+		echo
 		echo incorrect number of arguments
 		echo	
 		echo usage: "$0 [dev|cdev|ctl|stage|prod]  [list|describe|delete|create|consume|produce|consumeoff|sendtest]    [optionaltopicname]   [optionaladditionalparameter]"
