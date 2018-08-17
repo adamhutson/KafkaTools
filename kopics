@@ -1,5 +1,4 @@
 #!/bin/bash
-
 if [ "$#" -lt 2 ]; then
 		echo	
 		echo incorrect number of arguments
