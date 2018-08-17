@@ -144,9 +144,3 @@ echo
 
 #echo $stringvar  | sudo su - kafka
 echo $stringvar  | /bin/ksh
-
-
-
-
-
-
