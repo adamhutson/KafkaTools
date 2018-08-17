@@ -1,0 +1,152 @@
+#!/bin/bash
+
+if [ "$#" -lt 2 ]; then
+		echo	
+		echo incorrect number of arguments
+		echo	
+		echo usage: "$0 [dev|cdev|ctl|stage|prod]  [list|describe|delete|create|consume|produce|consumeoff|sendtest]    [optionaltopicname]   [optionaladditionalparameter]"
+		echo
+		exit
+	fi
+
+
+es_dev="vcld16rdbsgcb07.ual.com:9200"
+es_dev55="vcld16rdbsgcb05.ual.com:9250"
+es_ctl=""
+es_stage="sndcdfrqhdpdn005.ual.com:9200"
+es_stagemon="sndcdfrqhdpdn004.ual.com:9200"
+es_prod="sndcdfrphdpdn049.ual.com:9200"
+es_prod_sax="sndcdfrphdpdn049.ual.com:9250"
+es_prodmon="sndcdfrphdpdn058.ual.com:9200"
+
+zk_dev="vcld16rdcsldb06.ual.com:2181,vcld16rdcsldb07.ual.com:2181,vcld16rdcsldb08.ual.com:2181"
+zk_cdev="vcld16rdbsgcb01.ual.com:2181,vcld16rdbsgcb02.ual.com:2181,vcld16rdbsgcb03.ual.com:2181"
+zk_ctl="vcsmcrpkds03.ual.com:2181,vcsmcrpkds04.ual.com:2181,vcsmcrpkds05.ual.com:2181"
+zk_stage="sndcdfrqhdpmn002.ual.com:2181,sndcdfrqhdpmn003.ual.com:2181,sndcdfrqhdpmn004.ual.com:2181"
+zk_prod="sndcdfrphdpdn056.ual.com:2181,sndcdfrphdpdn025.ual.com:2181,sndcdfrphdpdn026.ual.com:2181"
+
+bk_dev="vcld16rdcsldb06.ual.com:9092,vcld16rdcsldb07.ual.com:9092,vcld16rdcsldb08.ual.com:9092"
+bk_cdev="vcld16rdbsgcb01.ual.com:9092,vcld16rdbsgcb02.ual.com:9092,vcld16rdbsgcb03.ual.com:9092"
+bk_ctl="vcsmcrpkds01.ual.com:9092,vcsmcrpkds02.ual.com:9092,vcsmcrpkds03.ual.com:9092"
+bk_stage="sndcdfrqhdpdn001.ual.com:9092,sndcdfrqhdpdn002.ual.com:9092,sndcdfrqhdpdn003.ual.com:9092"
+bk_prod="sndcdfrphdpdn068.ual.com:9092,sndcdfrphdpdn070.ual.com:9092,sndcdfrphdpdn071.ual.com:9092"
+
+kbase_dev="/home/kafka/kafka_2.11-0.9.0.1/bin/"
+kbase_cdev="/apps/confluent-3.2.0/bin/"
+kbase_ctl="/opt/kafka09/kafka_2.11-0.9.0.1/bin/"
+kbase_stage="/usr/hdp/current/kafka-broker/bin/"
+kbase_prod="/usr/hdp/current/kafka-broker/bin/"
+
+
+case "$1" in
+        dev)
+	    base=$kbase_dev
+            zk=$zk_dev
+	    bk=$bk_dev
+	    topics="kafka-topics.sh"
+            consume="kafka-console-consumer.sh"
+            produce="kafka-console-producer.sh"
+            ;;
+	cdev)
+	    base=$kbase_cdev
+            zk=$zk_cdev
+	    bk=$bk_cdev
+	    topics="kafka-topics"
+            consume="kafka-console-consumer"
+            produce="kafka-console-producer"
+ 	    ;;
+        ctl)
+	    base=$kbase_ctl
+            zk=$zk_ctl
+	    bk=$bk_ctl
+	    topics="kafka-topics.sh"
+            consume="kafka-console-consumer.sh"
+            produce="kafka-console-producer.sh"
+            ;;
+        stage)
+	    base=$kbase_stage
+            zk=$zk_stage
+	    bk=$bk_stage
+	    topics="kafka-topics.sh"
+            consume="kafka-console-consumer.sh"
+            produce="kafka-console-producer.sh"
+            ;;
+        prod)
+	    base=$kbase_prod
+            zk=$zk_prod
+	    bk=$bk_prod
+	    topics="kafka-topics.sh"
+            consume="kafka-console-consumer.sh"
+            produce="kafka-console-producer.sh"
+            ;;
+         
+        *)
+	    echo
+            echo $"invalid environment parameter"
+	    echo
+            exit 1
+esac
+
+ 
+topic=$3
+finaloptions=$4
+whoami=`who am i|awk '{print $1}'`
+consumerconfig=$whoami".consumer.config"
+#echo $consumerconfig
+echo "exclude.internal.topics=false" > $consumerconfig
+formatter="kafka.coordinator.GroupMetadataManager""\\\$OffsetsMessageFormatter"
+
+case "$2" in
+        list)
+	    stringvar=${base}"${topics} --list --zookeeper "$zk
+            ;;
+        describe)
+	    stringvar=${base}"${topics} --describe --zookeeper "$zk" --topic "$topic 
+            ;;
+        delete)
+	    stringvar=${base}"${topics} --delete --zookeeper "$zk" --topic "$topic 
+	    echo $stringvar
+            exit 1
+            ;;
+        create)
+	    stringvar=${base}"${topics} --create --zookeeper "$zk" --topic "$topic 
+	    echo $stringvar
+            exit 1
+            ;;
+        consume)
+	    stringvar=${base}"${consume} --zookeeper "$zk" --topic "$topic" "$finaloptions 
+            ;;
+        produce)
+	    stringvar=${base}"${produce} --broker-list "$bk" --topic "$topic" "$finaloptions 
+	    echo $stringvar
+	    exit 1
+            ;;
+        consumeoff)
+	    stringvar=${base}"${consume} --zookeeper "$zk" --topic __consumer_offsets --consumer.config "$consumerconfig" --formatter "$formatter
+            echo $stringvar
+            ;;
+        sendtest)
+	    stringvar="cat testrec|"${base}"${produce} --broker-list "$bk" --topic "$topic" "$finaloptions 
+            echo $stringvar|/bin/sh
+            echo $stringvar
+            ;;
+         
+        *)
+	    echo
+            echo $"invalid first paramater "
+	    echo
+            exit 1
+esac
+echo
+echo $stringvar
+echo
+
+
+#echo $stringvar  | sudo su - kafka
+echo $stringvar  | /bin/ksh
+
+
+
+
+
+
